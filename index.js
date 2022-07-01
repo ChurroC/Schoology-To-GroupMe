@@ -1,5 +1,6 @@
 const puppeteer = require("puppeteer");
 const SchoologyAPI = require('./schoologyAPI')
+const groupmeAPI = require('./groupmeAPI')
 
 const clientKey = process.env.clientKey
 const clientSecret = process.env.clientSecret
@@ -20,14 +21,25 @@ async function grabUpdate() {
     await page.type('#edit-pass', schoologyPassword)
     await page.click('#edit-submit')
 
+    
+    await new Promise(resolve => { setTimeout(resolve, 500) });
     await page.goto('https://app.schoology.com/course/5003999147/updates')
+    await page.waitForXPath('//li[@class][@timestamp]')
     const update = await page.$x('//li[@class][@timestamp]')
 
     await update[0].screenshot({path: 'update.png'})
+    await browser.close()
+    sendToGroupMe()
 }
 
 async function sendToGroupMe() {
-
+    try {
+        const imageLink = await groupmeAPI.imageService('./update.png')
+        await groupmeAPI.sendMessage('', imageLink.payload.url)
+    }
+    catch(err) {
+        console.log(err.response ? err.response.data : err)
+    }
 }
 
 ;(async () => {
@@ -37,17 +49,13 @@ async function sendToGroupMe() {
     const updateLink = '/sections/5003999147/updates?start=0&limit=1'
     const updates = await client.request(updateLink)
     let updateId = updates.update[0].id
-    console.log(';hji')
-    await grabUpdate()
-    console.log(';hji')
 
-    /*
     while(true) {
         const updates = await client.request(updateLink)
         console.log(updateId)
-        if (updateId  = updates.update[0].id) {
+        if (updateId  !== updates.update[0].id) {
             updateId = updates.update[0].id
+            grabUpdate()
         }
-        grabUpdate()
-    }*/
+    }
 })()
