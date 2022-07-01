@@ -1,36 +1,53 @@
-const axios = require("axios")
-const open = require('open');
+const puppeteer = require("puppeteer");
 const SchoologyAPI = require('./schoologyAPI')
-const express = require('express')
-const fs = require('fs')
 
-app = express()
-
-app.get('/authorized', express.json(), (req, res) => {
-    res.send('Authorized')
-})
-
-app.get('/', (req, res) => {
-    res.send('Hi')
-})
-
-app.listen(8080, ()=>{console.log(`App listening at port 8080`)})
-
-
-const clientKey = 'b59371e5bd37771e4896a0a89259a0d6062ba49a9'
-const clientSecret = 'b8a95ab02e5b1b435c625207b651bd93'
+const clientKey = process.env.clientKey
+const clientSecret = process.env.clientSecret
+const oauthTokenKey = process.env.oauthTokenKey
+const oauthTokenSecret = process.env.oauthTokenSecret
+const schoologyUsername = process.env.schoologyUsername
+const schoologyPassword = process.env.schoologyPassword
 
 client = new SchoologyAPI(clientKey, clientSecret)
 
+async function grabUpdate() {
+    const browser = await puppeteer.launch({ headless: false });
+    const page = await browser.newPage()
+    await page.setViewport({ width: 816, height: 619 })  
+
+    await page.goto('https://app.schoology.com/login')
+    await page.type('#edit-mail', schoologyUsername)
+    await page.type('#edit-pass', schoologyPassword)
+    await page.click('#edit-submit')
+
+    await page.goto('https://app.schoology.com/course/5003999147/updates')
+    const update = await page.$x('//li[@class][@timestamp]')
+
+    await update[0].screenshot({path: 'update.png'})
+}
+
+async function sendToGroupMe() {
+
+}
+
 ;(async () => {
-    const cool = await client.getRequestToken()
-    console.log(cool)
-    open(client.approveTokenWebsite('tolocalhost.com'))
-    process.stdout.write("Once you are finished authorizing enter any key in terminal.")
-    await new Promise(resolve => { process.stdin.once("data", data  => resolve(data)) })
-    const cool2 = await client.getAccessToken()
-    console.log(cool2)
+    client.oauthTokenKey = oauthTokenKey
+    client.oauthTokenSecret = oauthTokenSecret
+
+    const updateLink = '/sections/5003999147/updates?start=0&limit=1'
+    const updates = await client.request(updateLink)
+    let updateId = updates.update[0].id
+    console.log(';hji')
+    await grabUpdate()
+    console.log(';hji')
+
+    /*
+    while(true) {
+        const updates = await client.request(updateLink)
+        console.log(updateId)
+        if (updateId  = updates.update[0].id) {
+            updateId = updates.update[0].id
+        }
+        grabUpdate()
+    }*/
 })()
-/*
-https://app.schoology.com/oauth/authorize?oauth_token=51dc65e8e7d708a003e5be29eced8eec062bcf410&oauth_callback=bobbyhadz.com/blog/javascript-error-err-require-esm-require-of-es-module-not-supported
-https://app.schoology.com/oauth/authorize?oauth_token=33cb258c68726c0473707542adaad297062bcdb80&oauth_callback=schoologyweb.vercel.app*/

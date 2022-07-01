@@ -12,7 +12,6 @@ module.exports = class SchoologyAPI {
             consumer: { key: this.consumerKey, secret: this.consumerSecret },
             signature_method: 'HMAC-SHA1',
             hash_function(base_string, key) {
-                console.log(base_string)
                 return crypto
                     .createHmac('sha1', key)
                     .update(base_string)
@@ -40,8 +39,8 @@ module.exports = class SchoologyAPI {
             })
 
             this.requestToken = res.data
-            this.requestTokenKey = this.parseRequestToken.key
-            this.requestTokenSecret = this.parseRequestToken.secret
+            this.requestTokenKey = this.parseToken(this.requestToken).key
+            this.requestTokenSecret = this.parseToken(this.requestToken).secret
 
             return res.data
         }
@@ -50,9 +49,9 @@ module.exports = class SchoologyAPI {
         }
     }
 
-    get parseRequestToken() {
-        const key = this.requestToken.slice(12, 53)
-        const secret = this.requestToken.slice(73, 105)
+    parseToken(token) {
+        const key = token.slice(12, 53)
+        const secret = token.slice(73, 105)
         return { key, secret }
     }
 
@@ -76,8 +75,9 @@ module.exports = class SchoologyAPI {
                 headers: hashAuth
             })
 
-            this.oauthToken = this.parseRequestToken.key
-            this.requestTokenSecret = this.parseRequestToken.secret
+            this.oauthToken = res.data
+            this.oauthTokenKey = this.parseToken(this.oauthToken).key
+            this.oauthTokenSecret = this.parseToken(this.oauthToken).secret
 
             return res.data
         }
@@ -88,20 +88,22 @@ module.exports = class SchoologyAPI {
     
     async request(path) {
         try {
-            url = `https://api.schoology.com/v1${path}`
+            const url = `https://api.schoology.com/v1${path}`
 
             const hashAuth = this.oauth.toHeader(this.oauth.authorize({
-                url: 'https://api.schoology.com/v1/oauth/request_token',
+                url: url,
                 method: 'GET',
                 data: {
                     oauth_consumer_key: this.consumerKey,
-                    oauth_token: "",
+                    oauth_token: this.oauthTokenKey,
                 }
-            }, {secret: this.requestTokenSecret}))
+            }, {secret: this.oauthTokenSecret}))
 
-            const res = await axios.get('https://api.schoology.com/v1/oauth/request_token', {
+            const res = await axios.get(url, {
                 headers: hashAuth
             })
+            
+            return res.data
         }
         catch(err) {
             return (err.response ? err.response.data : err)
