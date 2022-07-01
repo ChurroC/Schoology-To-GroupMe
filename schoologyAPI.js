@@ -1,6 +1,5 @@
 const axios = require('axios')
 const crypto = require('crypto')
-const { url } = require('inspector')
 const OAuth = require('oauth-1.0a')
 
 module.exports = class SchoologyAPI {
