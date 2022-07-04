@@ -1,6 +1,7 @@
 const puppeteer = require("puppeteer");
 const SchoologyAPI = require('./schoologyAPI')
 const groupmeAPI = require('./groupmeAPI')
+const server = require('./server')
 
 const clientKey = process.env.clientKey
 const clientSecret = process.env.clientSecret
@@ -14,7 +15,7 @@ const district = process.env.district
 client = new SchoologyAPI(clientKey, clientSecret)
 
 async function grabUpdate() {
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const page = await browser.newPage()
     await page.setViewport({ width: 816, height: 619 })  
 
@@ -44,6 +45,7 @@ async function sendToGroupMe() {
     }
 }
 
+
 ;(async () => {
     client.oauthTokenKey = oauthTokenKey
     client.oauthTokenSecret = oauthTokenSecret
@@ -60,3 +62,5 @@ async function sendToGroupMe() {
         }
     }
 })()
+
+server()
