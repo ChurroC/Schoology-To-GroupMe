@@ -1,3 +1,5 @@
+const groupmeAPI = require('./groupmeAPI')
+const grabUpdate = require('./index')
 const express = require('express')
 const app = express()
 
@@ -15,19 +17,20 @@ app.post('/new-message', express.json(), (req, res) => {
     res.send(body)
     if (text == '!ping') {
       console.log('in')
-        bot.sendMessage('pong')
+        groupmeAPI.sendMessage('pong')
             .catch(err => {
                 res.send(err)
             })
     }
     if (text == '!hi') {
-        bot.sendMessage(`Hi ${name}`)
+        groupmeAPI.sendMessage(`Hi ${name}`)
             .catch(err => {
                 res.send(err)
             })
     }
     if (text == '!latestpost') {
-        sendToGroupMe()
+        console.log(grabUpdate)
+        grabUpdate()
     }
 })
 

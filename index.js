@@ -1,4 +1,4 @@
-const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer")
 const SchoologyAPI = require('./schoologyAPI')
 const groupmeAPI = require('./groupmeAPI')
 const server = require('./server')
@@ -12,10 +12,10 @@ const schoologyPassword = process.env.schoologyPassword
 const course = process.env.course
 const district = process.env.district
 
-client = new SchoologyAPI(clientKey, clientSecret)
+const client = new SchoologyAPI(clientKey, clientSecret, oauthTokenKey, oauthTokenSecret)
 
 async function grabUpdate() {
-    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    const browser = await puppeteer.launch()
     const page = await browser.newPage()
     await page.setViewport({ width: 816, height: 619 })  
 
@@ -25,7 +25,7 @@ async function grabUpdate() {
     await page.click('#edit-submit')
 
     
-    await new Promise(resolve => { setTimeout(resolve, 500) });
+    await new Promise(resolve => { setTimeout(resolve, 500) })
     await page.goto(`https://${district}.schoology.com/course/${course}/updates`)
     await page.waitForXPath('//li[@class][@timestamp]')
     const update = await page.$x('//li[@class][@timestamp]')
@@ -45,17 +45,13 @@ async function sendToGroupMe() {
     }
 }
 
-
 ;(async () => {
-    client.oauthTokenKey = oauthTokenKey
-    client.oauthTokenSecret = oauthTokenSecret
-
     const updateLink = `/sections/${course}/updates?start=0&limit=1`
     const updates = await client.request(updateLink)
     let updateId = updates.update[0].id
 
     while(true) {
-        const updates = await client.request(`/sections/${course}/updates?start=0&limit=1`)
+        const updates = await client.request(`/sections/${course}/updates?start=1&limit=1`)
         if (updateId  !== updates.update[0].id) {
             updateId = updates.update[0].id
             grabUpdate()
@@ -64,3 +60,5 @@ async function sendToGroupMe() {
 })()
 
 server()
+
+module.exports = grabUpdate

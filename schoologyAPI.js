@@ -3,11 +3,16 @@ const crypto = require('crypto')
 const OAuth = require('oauth-1.0a')
 
 module.exports = class SchoologyAPI {
-    constructor(key, secret) {
-      this.consumerKey = key
-      this.consumerSecret = secret
-      //this.oauth gets a base string and uses sha1 on it.
-      this.oauth = OAuth({
+    constructor(key, secret, oauthTokenKey = '', oauthTokenSecret = '') {
+        this.consumerKey = key
+        this.consumerSecret = secret
+        this.oauthTokenKey = oauthTokenKey
+        this.oauthTokenSecret = oauthTokenSecret
+    }
+
+    get oauth() {
+        //this.oauth gets a base string and uses sha1 on it.
+        return OAuth({
             consumer: { key: this.consumerKey, secret: this.consumerSecret },
             signature_method: 'HMAC-SHA1',
             hash_function(base_string, key) {
@@ -17,6 +22,7 @@ module.exports = class SchoologyAPI {
                     .digest('base64')
             },
         })
+
     }
 
     async getRequestToken() {
